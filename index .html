@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Matrix | BrainSpark</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600&display=swap');
+
+        :root {
+            --cream: #FFF9F0;
+            --beige: #F5E6D8;
+            --light-brown: #E8D5C0;
+            --gold: #D4AF37;
+            --coffee: #A68A64;
+            --text: #3A3226;
+            --shadow: rgba(58, 50, 38, 0.1);
+            --card-bg: rgba(255, 249, 240, 0.85);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--cream);
+            color: var(--text);
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Элегантный фон с пузырями */
+        .bubbles-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, var(--beige), var(--cream));
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.08);
+            backdrop-filter: blur(2px);
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; }
+        }
+
+        /* Основные стили */
+        header {
+            padding: 1rem;
+            text-align: center;
+            background: linear-gradient(to bottom, var(--cream), transparent);
+            position: relative;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--coffee);
+            margin-bottom: 0.5rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .game-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--coffee);
+            margin-bottom: 0.5rem;
+        }
+
+        .game-subtitle {
+            font-size: 0.9rem;
+            color: var(--coffee);
+            margin-bottom: 0.5rem;
+            font-weight: 400;
+        }
+
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto 1rem;
+            padding: 1rem;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 8px 25px var(--shadow);
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .grid-container {
+            display: grid;
+            gap: 4px;
+            margin: 0.5rem 0;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .cell {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background-color: var(--light-brown);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--text);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .cell.active {
+            background-color: var(--gold);
+            color: white;
+            transform: scale(0.95);
+        }
+
+        .cell.correct {
+            background-color: #5cb85c;
+            color: white;
+        }
+
+        .cell.wrong {
+            background-color: #d9534f;
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .btn {
+            background: linear-gradient(to right, var(--gold), var(--coffee));
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(212, 175, 55, 0.3);
+            font-size: 1rem;
+            flex: 1;
+            min-width: 120px;
+            max-width: 200px;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--gold);
+            color: var(--coffee);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 0.5rem;
+            padding: 0.8rem;
+            background-color: rgba(166, 138, 100, 0.1);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--coffee);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text);
+            opacity: 0.8;
+        }
+
+        .level-indicator {
+            width: 100%;
+            height: 8px;
+            background-color: var(--light-brown);
+            border-radius: 5px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .level-progress {
+            height: 100%;
+            background: linear-gradient(to right, var(--gold), var(--coffee));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .instructions {
+            background-color: rgba(255, 249, 240, 0.7);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--gold);
+            font-size: 0.9rem;
+        }
+
+        .instructions h3 {
+            color: var(--coffee);
+            margin-bottom: 0.5rem;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+        }
+
+        .instructions p {
+            margin-bottom: 0.5rem;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(58, 50, 38, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: var(--cream);
+            padding: 1.5rem;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-title {
+            font-family: 'Playfair Display', serif;
+            color: var(--coffee);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .modal-message {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .difficulty-selector {
+            margin: 1rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .difficulty-btn {
+            background: none;
+            border: 2px solid var(--light-brown);
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            min-width: 80px;
+        }
+
+        .difficulty-btn.active {
+            border-color: var(--gold);
+            background-color: rgba(212, 175, 55, 0.1);
+            color: var(--coffee);
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background: linear-gradient(to top, var(--beige), transparent);
+            position: relative;
+            font-size: 0.9rem;
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes successPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(92, 184, 92, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(92, 184, 92, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(92, 184, 92, 0); }
+        }
+
+        /* Оптимизация для очень маленьких экранов */
+        @media (max-width: 400px) {
+            .logo {
+                font-size: 1.5rem;
+            }
+            
+            .game-title {
+                font-size: 1.3rem;
+            }
+            
+            .cell {
+                font-size: 0.8rem;
+            }
+            
+            .btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .stat-value {
+                font-size: 1.1rem;
+            }
+            
+            .stat-label {
+                font-size: 0.6rem;
+            }
+        }
+        
+        /* Ландшафтная ориентация */
+        @media (max-height: 500px) and (orientation: landscape) {
+            header {
+                padding: 0.5rem;
+            }
+            
+            .game-container {
+                margin: 0.5rem auto;
+                padding: 0.5rem;
+            }
+            
+            .grid-container {
+                max-width: 300px;
+            }
+            
+            .stats {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Фон с пузырями -->
+    <div class="bubbles-bg" id="bubblesBg"></div>
+
+    <header>
+        <div class="logo">BrainSpark</div>
+        <h1 class="game-title">Memory Matrix</h1>
+        <p class="game-subtitle">Тренировка зрительной памяти и пространственного восприятия</p>
+    </header>
+
+    <div class="game-container">
+        <div class="game-area">
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="level">1</div>
+                    <div class="stat-label">Уровень</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">Очки</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="streak">0</div>
+                    <div class="stat-label">Серия</div>
+                </div>
+            </div>
+
+            <div class="level-indicator">
+                <div class="level-progress" id="levelProgress"></div>
+            </div>
+
+            <div class="grid-container" id="gameGrid"></div>
+
+            <div class="controls">
+                <button class="btn" id="startBtn">Начать игру</button>
+                <button class="btn btn-outline" id="hintBtn">Подсказка</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>Как играть?</h3>
+        <p>1. Запомните подсвеченные клетки в сетке.</p>
+        <p>2. После сигнала воспроизведите запомненную комбинацию, кликая по клеткам.</p>
+        <p>3. С каждым уровнем размер сетки и количество клеток увеличиваются.</p>
+    </div>
+
+    <!-- Модальное окно выбора сложности -->
+    <div class="modal" id="difficultyModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Выберите уровень сложности</h2>
+            <p class="modal-message">Начните с простого уровня, если играете впервые</p>
+            
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-difficulty="easy">Легкий</button>
+                <button class="difficulty-btn" data-difficulty="medium">Средний</button>
+                <button class="difficulty-btn" data-difficulty="hard">Сложный</button>
+            </div>
+            
+            <button class="btn" id="confirmDifficulty">Подтвердить</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно результата -->
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="resultTitle">Отличный результат!</h2>
+            <p class="modal-message" id="resultMessage">Вы успешно завершили уровень 3 с результатом 12/12</p>
+            
+            <div class="stats" style="justify-content: center; gap: 1rem; margin: 1rem 0;">
+                <div class="stat-item">
+                    <div class="stat-value" id="finalScore">0</div>
+                    <div class="stat-label">Общий счет</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="finalStreak">0</div>
+                    <div class="stat-label">Макс. серия</div>
+                </div>
+            </div>
+            
+            <button class="btn" id="nextLevelBtn">Следующий уровень</button>
+            <button class="btn btn-outline" style="margin-top: 0.5rem;" id="restartBtn">Начать заново</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>Тренируйтесь с удовольствием и видите прогресс каждый день!</p>
+    </footer>
+
+    <script>
+        // Инициализация игры
+        document.addEventListener('DOMContentLoaded', function() {
+            // Создаем пузыри на фоне
+            createBubbles();
+            
+            // Элементы игры
+            const gameGrid = document.getElementById('gameGrid');
+            const startBtn = document.getElementById('startBtn');
+            const hintBtn = document.getElementById('hintBtn');
+            const levelEl = document.getElementById('level');
+            const scoreEl = document.getElementById('score');
+            const streakEl = document.getElementById('streak');
+            const levelProgress = document.getElementById('levelProgress');
+            const difficultyModal = document.getElementById('difficultyModal');
+            const resultModal = document.getElementById('resultModal');
+            const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+            const confirmDifficultyBtn = document.getElementById('confirmDifficulty');
+            const nextLevelBtn = document.getElementById('nextLevelBtn');
+            const restartBtn = document.getElementById('restartBtn');
+            const finalScoreEl = document.getElementById('finalScore');
+            const finalStreakEl = document.getElementById('finalStreak');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            
+            // Переменные игры
+            let gridSize = 3;
+            let cellsToRemember = 3;
+            let activeCells = [];
+            let selectedCells = [];
+            let gameState = 'idle'; // 'idle', 'memorize', 'recall', 'result'
+            let level = 1;
+            let score = 0;
+            let streak = 0;
+            let maxStreak = 0;
+            let difficulty = 'easy';
+            let timer;
+            let memorizeTime = 2000;
+            let hintUsed = false;
+            
+            // Инициализация сетки
+            function initGrid() {
+                gameGrid.innerHTML = '';
+                gameGrid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+                
+                for (let i = 0; i < gridSize * gridSize; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.index = i;
+                    cell.addEventListener('click', handleCellClick);
+                    gameGrid.appendChild(cell);
+                }
+            }
+            
+            // Обработчик клика по клетке
+            function handleCellClick(e) {
+                if (gameState !== 'recall') return;
+                
+                const cell = e.target;
+                const index = parseInt(cell.dataset.index);
+                
+                // Если клетка уже выбрана, игнорируем
+                if (selectedCells.includes(index)) return;
+                
+                // Добавляем клетку в выбранные
+                selectedCells.push(index);
+                cell.classList.add('active');
+                
+                // Проверяем, правильная ли клетка
+                if (activeCells.includes(index)) {
+                    cell.classList.add('correct');
+                    // Анимация успеха
+                    cell.style.animation = 'successPulse 0.6s ease-out';
+                    setTimeout(() => {
+                        cell.style.animation = '';
+                    }, 600);
+                    
+                    // Проверяем, завершен ли уровень
+                    if (selectedCells.length === activeCells.length) {
+                        completeLevel(true);
+                    }
+                } else {
+                    cell.classList.add('wrong');
+                    completeLevel(false);
+                }
+            }
+            
+            // Начать игру
+            function startGame() {
+                difficultyModal.classList.add('active');
+            }
+            
+            // Начать уровень
+            function startLevel() {
+                gameState = 'memorize';
+                activeCells = [];
+                selectedCells = [];
+                hintUsed = false;
+                
+                // Очищаем сетку
+                document.querySelectorAll('.cell').forEach(cell => {
+                    cell.className = 'cell';
+                });
+                
+                // Генерируем случайные клетки для запоминания
+                const totalCells = gridSize * gridSize;
+                while (activeCells.length < cellsToRemember) {
+                    const randomIndex = Math.floor(Math.random() * totalCells);
+                    if (!activeCells.includes(randomIndex)) {
+                        activeCells.push(randomIndex);
+                    }
+                }
+                
+                // Показываем клетки для запоминания
+                activeCells.forEach(index => {
+                    const cell = document.querySelector(`.cell[data-index="${index}"]`);
+                    cell.classList.add('active');
+                });
+                
+                // Через некоторое время скрываем клетки
+                setTimeout(() => {
+                    document.querySelectorAll('.cell').forEach(cell => {
+                        cell.classList.remove('active');
+                    });
+                    gameState = 'recall';
+                }, memorizeTime);
+            }
+            
+            // Завершить уровень
+            function completeLevel(success) {
+                gameState = 'result';
+                clearTimeout(timer);
+                
+                if (success) {
+                    // Успешное завершение уровня
+                    const points = cellsToRemember * (hintUsed ? 1 : 2);
+                    score += points;
+                    streak++;
+                    if (streak > maxStreak) maxStreak = streak;
+                    
+                    scoreEl.textContent = score;
+                    streakEl.textContent = streak;
+                    
+                    // Обновляем прогресс уровня
+                    const progress = Math.min(100, (streak * 20));
+                    levelProgress.style.width = `${progress}%`;
+                    
+                    // Если прогресс 100%, повышаем уровень
+                    if (progress >= 100) {
+                        level++;
+                        levelEl.textContent = level;
+                        levelProgress.style.width = '0%';
+                        
+                        // Увеличиваем сложность
+                        if (level % 3 === 0) {
+                            gridSize = Math.min(6, gridSize + 1);
+                        }
+                        cellsToRemember = Math.min(gridSize * gridSize - 2, cellsToRemember + 1);
+                        
+                        // Уменьшаем время запоминания
+                        memorizeTime = Math.max(1000, memorizeTime - 200);
+                    }
+                    
+                    // Показываем результат
+                    showResult(true);
+                } else {
+                    // Неудачное завершение уровня
+                    streak = 0;
+                    streakEl.textContent = streak;
+                    levelProgress.style.width = '0%';
+                    showResult(false);
+                }
+            }
+            
+            // Показать результат
+            function showResult(success) {
+                if (success) {
+                    resultTitle.textContent = ['Отлично!', 'Превосходно!', 'Идеально!', 'Фантастика!'][Math.floor(Math.random() * 4)];
+                    resultMessage.textContent = `Вы успешно завершили уровень ${level} с результатом ${selectedCells.length}/${activeCells.length}`;
+                } else {
+                    resultTitle.textContent = ['Почти получилось!', 'Попробуйте еще!', 'Не сдавайтесь!', 'Следующий раз получится!'][Math.floor(Math.random() * 4)];
+                    resultMessage.textContent = `Вы запомнили ${selectedCells.filter(idx => activeCells.includes(idx)).length} из ${activeCells.length} клеток`;
+                }
+                
+                finalScoreEl.textContent = score;
+                finalStreakEl.textContent = maxStreak;
+                resultModal.classList.add('active');
+            }
+            
+            // Подсказка
+            function showHint() {
+                if (gameState !== 'recall' || hintUsed) return;
+                
+                hintUsed = true;
+                const randomActiveCell = activeCells[Math.floor(Math.random() * activeCells.length)];
+                const cell = document.querySelector(`.cell[data-index="${randomActiveCell}"]`);
+                
+                // Мигание клетки
+                cell.style.animation = 'fadeIn 0.5s 3';
+                setTimeout(() => {
+                    cell.style.animation = '';
+                }, 1500);
+            }
+            
+            // Создаем пузыри на фоне
+            function createBubbles() {
+                const bubblesBg = document.getElementById('bubblesBg');
+                const bubbleCount = window.innerWidth < 768 ? 15 : 30;
+                
+                for (let i = 0; i < bubbleCount; i++) {
+                    const bubble = document.createElement('div');
+                    bubble.classList.add('bubble');
+                    
+                    const size = Math.random() * 60 + 20;
+                    const posX = Math.random() * 100;
+                    const delay = Math.random() * 15;
+                    const duration = Math.random() * 15 + 10;
+                    
+                    bubble.style.width = `${size}px`;
+                    bubble.style.height = `${size}px`;
+                    bubble.style.left = `${posX}%`;
+                    bubble.style.bottom = `-${size}px`;
+                    bubble.style.animationDelay = `${delay}s`;
+                    bubble.style.animationDuration = `${duration}s`;
+                    
+                    bubblesBg.appendChild(bubble);
+                }
+            }
+            
+            // Обработчики событий
+            startBtn.addEventListener('click', startGame);
+            hintBtn.addEventListener('click', showHint);
+            
+            difficultyBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    difficultyBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    difficulty = this.dataset.difficulty;
+                    
+                    // Устанавливаем параметры сложности
+                    switch(difficulty) {
+                        case 'easy':
+                            gridSize = 3;
+                            cellsToRemember = 3;
+                            memorizeTime = 2500;
+                            break;
+                        case 'medium':
+                            gridSize = 4;
+                            cellsToRemember = 4;
+                            memorizeTime = 2000;
+                            break;
+                        case 'hard':
+                            gridSize = 4;
+                            cellsToRemember = 5;
+                            memorizeTime = 1500;
+                            break;
+                    }
+                });
+            });
+            
+            confirmDifficultyBtn.addEventListener('click', function() {
+                difficultyModal.classList.remove('active');
+                initGrid();
+                startLevel();
+            });
+            
+            nextLevelBtn.addEventListener('click', function() {
+                resultModal.classList.remove('active');
+                startLevel();
+            });
+            
+            restartBtn.addEventListener('click', function() {
+                resultModal.classList.remove('active');
+                
+                // Сброс параметров игры
+                level = 1;
+                score = 0;
+                streak = 0;
+                maxStreak = 0;
+                
+                levelEl.textContent = level;
+                scoreEl.textContent = score;
+                streakEl.textContent = streak;
+                levelProgress.style.width = '0%';
+                
+                // Устанавливаем параметры сложности
+                switch(difficulty) {
+                    case 'easy':
+                        gridSize = 3;
+                        cellsToRemember = 3;
+                        memorizeTime = 2500;
+                        break;
+                    case 'medium':
+                        gridSize = 4;
+                        cellsToRemember = 4;
+                        memorizeTime = 2000;
+                        break;
+                    case 'hard':
+                        gridSize = 4;
+                        cellsToRemember = 5;
+                        memorizeTime = 1500;
+                        break;
+                }
+                
+                initGrid();
+                startLevel();
+            });
+            
+            // Инициализация
+            initGrid();
+        });
+    </script>
+</body>
+</html>
